@@ -11,7 +11,6 @@
   <!-- 配置Tailwind自定义主题 -->
   <script>
     tailwind.config = {
-    darkMode: 'class',
       theme: {
         extend: {
           colors: {
@@ -142,7 +141,7 @@
   </style>
 </head>
 
-<body class="bg-light text-dark dark:bg-[#121212] dark:text-gray-200">
+<body class="bg-light text-dark">
   <!-- 导航栏 -->
   <header id="navbar" class="fixed w-full top-0 z-50 transition-all duration-300 bg-white/80 backdrop-blur-sm shadow-sm">
     <div class="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -152,7 +151,7 @@
           <div class="w-10 h-10 bg-gradient-to-r from-primary to-secondary rounded-lg flex items-center justify-center">
             <span class="text-white font-bold text-xl">DP</span>
           </div>
-          <span class="text-xl font-bold text-dark">DrissionPage 美化版</span>
+          <span class="text-xl font-bold text-dark">DrissionPage</span>
         </a>
         
         <!-- 桌面端导航 -->
@@ -166,11 +165,6 @@
         </nav>
         
         <!-- 下载按钮 -->
-
-<button id="dark-toggle" class="text-sm px-3 py-1 rounded-md border border-gray-medium hover:bg-gray-medium/20 transition-all">
-  夜间模式
-</button>
-
         <div class="hidden md:block">
           <a href="#" class="bg-accent hover:bg-accent/90 text-white px-5 py-2 rounded-lg font-medium btn-hover">
             下载最新版
@@ -821,19 +815,6 @@
       });
     }
     
-    
-  const darkToggle = document.getElementById('dark-toggle');
-  if (darkToggle) {
-    darkToggle.addEventListener('click', () => {
-      document.documentElement.classList.toggle('dark');
-    });
-  }
-  // 默认根据系统偏好设置
-  if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-    document.documentElement.classList.add('dark');
-  }
-
-
     // 性能对比图表
     window.addEventListener('load', function() {
       const ctx = document.getElementById('performanceChart');
@@ -888,8 +869,6 @@
         });
       }
     });
-
-     document.documentElement.classList.toggle('dark');
   </script>
 </body>
 </html>

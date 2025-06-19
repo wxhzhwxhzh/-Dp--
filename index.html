@@ -205,10 +205,10 @@
     <div class="container mx-auto px-4 sm:px-6 lg:px-8">
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
         <div class="space-y-8 reveal">
-          <h1 class="text-[clamp(2.5rem,5vw,4rem)] font-bold text-white leading-tight">
+          <h1 class="text-[clamp(2.5rem,5vw,4rem)] font-bold text-dark leading-tight">
             DrissionPage：<br>Python网页自动化的<span class="text-secondary">全能解决方案</span>
           </h1>
-          <p class="text-[clamp(1rem,2vw,1.5rem)] text-gray-light max-w-xl text-balance">
+          <p class="text-[clamp(1rem,2vw,1.5rem)] text-gray max-w-xl text-balance">
             融合浏览器控制与数据包收发能力，兼顾自动化便利性与高效率，助力您轻松完成网页自动化任务
           </p>
           <div class="flex flex-col sm:flex-row gap-4">
@@ -238,11 +238,29 @@
         <div class="relative reveal">
           <div class="bg-dark/50 backdrop-blur-md p-6 rounded-xl border border-white/10 shadow-2xl">
             <div class="code-animation text-white font-mono text-sm">
-              <span>>> from drissionpage import ChromiumPage</span><br>
-              <span>>> page = ChromiumPage()</span><br>
-              <span>>> page.goto("https://example.com")</span><br>
-              <span>>> button = page.find_element_by_text("点击我")</span><br>
-              <span>>> button.click()</span>
+            <pre>
+# 导入
+from DrissionPage import Chromium
+
+# 连接浏览器
+browser = Chromium()  
+# 获取标签页对象
+tab = browser.latest_tab  
+# 访问网页
+tab.get('https://www.baidu.com')  
+# 获取文本框元素对象
+ele = tab.ele('#kw')
+# 向文本框元素对象输入文本
+ele.input('DrissionPage')  
+# 点击按钮，上两行的代码可以缩写成这样
+tab('#su').click()  
+# 获取所有<h3>元素
+links = tab.eles('tag:h3')  
+# 遍历并打印结果
+for link in links:  
+    print(link.text)
+            </pre>
+
             </div>
           </div>
           <!-- 装饰元素 -->
@@ -889,7 +907,7 @@
       }
     });
 
-     document.documentElement.classList.toggle('dark');
+    //  document.documentElement.classList.toggle('dark');
   </script>
 </body>
 </html>

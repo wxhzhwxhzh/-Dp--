@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DrissionPage - Python网页自动化解决方案</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+  
+  <!-- 配置Tailwind自定义主题 -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#4F9BFF',
+            secondary: '#64E9FF',
+            accent: '#FFAA2C',
+            success: '#52D977',
+            dark: '#0F1419',
+            'dark-light': '#1A1F2B',
+            'dark-medium': '#242B3C',
+            'dark-border': '#2A3441',
+            light: '#F5F7FA',
+            'gray-light': '#E5E6EB',
+            'gray-medium': '#94A3B8',
+            'gray-dark': '#64748B',
+            'text-primary': '#F1F5F9',
+            'text-secondary': '#CBD5E1',
+          },
+          fontFamily: {
+            inter: ['Inter', 'system-ui', 'sans-serif'],
+          },
+          animation: {
+            'fade-in': 'fadeIn 0.8s ease-in-out',
+            'slide-up': 'slideUp 0.8s ease-out',
+            'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            'typing': 'typing 2s steps(40) infinite alternate',
+            'glow': 'glow 2s ease-in-out infinite alternate',
+          },
+          keyframes: {
+            fadeIn: {
+              '0%': { opacity: '0' },
+              '100%': { opacity: '1' },
+            },
+            slideUp: {
+              '0%': { transform: 'translateY(30px)', opacity: '0' },
+              '100%': { transform: 'translateY(0)', opacity: '1' },
+            },
+            typing: {
+              '0%': { width: '0' },
+              '100%': { width: '280px' },
+            },
+            glow: {
+              '0%': { boxShadow: '0 0 20px rgba(79, 155, 255, 0.3)' },
+              '100%': { boxShadow: '0 0 40px rgba(79, 155, 255, 0.6)' },
+            }
+          },
+          backgroundImage: {
+            'dark-gradient': 'linear-gradient(135deg, #0F1419 0%, #1A1F2B 50%, #242B3C 100%)',
+            'code-pattern': "linear-gradient(135deg, #4F9BFF15 25%, transparent 25%), linear-gradient(225deg, #4F9BFF15 25%, transparent 25%), linear-gradient(315deg, #4F9BFF15 25%, transparent 25%), linear-gradient(45deg, #4F9BFF15 25%, transparent 25%)",
+          }
+        },
+      }
+    }
+  </script>
+  
+  <!-- 自定义工具类 -->
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto {
+        content-visibility: auto;
+      }
+      .text-balance {
+        text-wrap: balance;
+      }
+      .card-hover {
+        @apply transition-all duration-300 hover:shadow-2xl hover:shadow-primary/20 hover:-translate-y-2;
+      }
+      .btn-hover {
+        @apply transition-all duration-300 hover:shadow-lg hover:shadow-primary/30 hover:-translate-y-1;
+      }
+      .nav-link {
+        @apply relative text-text-secondary hover:text-primary transition-colors duration-300;
+      }
+      .nav-link::after {
+        @apply content-[''] absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300;
+      }
+      .nav-link:hover::after {
+        @apply w-full;
+      }
+      .dark-card {
+        @apply bg-dark-medium border border-dark-border;
+      }
+      .glow-effect {
+        @apply shadow-lg shadow-primary/20;
+      }
+    }
+  </style>
+  
+  <style>
+    /* 基础样式 */
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      scroll-behavior: smooth;
+      background: #0F1419;
+    }
+    
+    /* 代码动画容器 */
+    .code-animation {
+      position: relative;
+      overflow: hidden;
+      white-space: nowrap;
+      border-right: 2px solid #64E9FF;
+      margin: 0 auto;
+      animation: typing 2s steps(40) infinite alternate;
+    }
+    
+    /* 滚动显示动画 */
+    .reveal {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: all 0.8s ease;
+    }
+    
+    .reveal.active {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    
+    /* 导航栏滚动效果 */
+    .nav-scrolled {
+      @apply bg-dark/95 backdrop-blur-md shadow-lg shadow-primary/10;
+    }
+    
+    /* 打赏二维码模态框 */
+    .qr-modal {
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+    }
+    
+    /* 自定义滚动条 */
+    .custom-scrollbar::-webkit-scrollbar {
+      height: 6px;
+    }
+    
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #242B3C;
+      border-radius: 10px;
+    }
+    
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #4F9BFF;
+      border-radius: 10px;
+    }
+    
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #64E9FF;
+    }
+    
+    /* 发光效果 */
+    .neon-glow {
+      box-shadow: 0 0 20px rgba(79, 155, 255, 0.3), 
+                  0 0 40px rgba(79, 155, 255, 0.2),
+                  0 0 60px rgba(79, 155, 255, 0.1);
+    }
+    
+    /* 渐变边框 */
+    .gradient-border {
+      position: relative;
+      background: linear-gradient(135deg, #4F9BFF, #64E9FF);
+      padding: 1px;
+      border-radius: 12px;
+    }
+    
+    .gradient-border-inner {
+      background: #242B3C;
+      border-radius: 11px;
+      padding: 2rem;
+    }
+  </style>
+</head>
+
+<body class="bg-dark text-text-primary">
+  <!-- 导航栏 -->
+  <header id="navbar" class="fixed w-full top-0 z-50 transition-all duration-300 bg-dark/80 backdrop-blur-sm shadow-lg shadow-primary/10">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center h-16 md:h-20">
+        <!-- Logo -->
+        <a href="#" class="flex items-center space-x-2">
+          <div class="w-10 h-10 bg-gradient-to-r from-primary to-secondary rounded-lg flex items-center justify-center neon-glow">
+            <span class="text-white font-bold text-xl">DP</span>
+          </div>
+          <span class="text-xl font-bold text-text-primary">DrissionPage</span>
+        </a>
+        
+        <!-- 桌面端导航 -->
+        <nav class="hidden md:flex items-center space-x-8">
+          <a href="#hero" class="nav-link">首页</a>
+          <a href="#features" class="nav-link">功能</a>
+          <a href="#use-cases" class="nav-link">场景</a>
+          <a href="#tutorials" class="nav-link">教程</a>
+          <a href="#community" class="nav-link">社区</a>
+          <a href="#about" class="nav-link">关于</a>
+        </nav>
+        
+        <!-- 下载按钮 -->
+        <div class="hidden md:block">
+          <a href="#" class="bg-accent hover:bg-accent/90 text-dark-light px-5 py-2 rounded-lg font-medium btn-hover glow-effect">
+            下载最新版
+          </a>
+        </div>
+        
+        <!-- 移动端菜单按钮 -->
+        <button id="menu-toggle" class="md:hidden text-text-primary focus:outline-none">
+          <i class="fa fa-bars text-2xl"></i>
+        </button>
+      </div>
+    </div>
+    
+    <!-- 移动端导航菜单 -->
+    <div id="mobile-menu" class="md:hidden hidden bg-dark-medium border-t border-dark-border">
+      <div class="container mx-auto px-4 py-3 space-y-3">
+        <a href="#hero" class="block py-2 text-text-secondary hover:text-primary transition-colors">首页</a>
+        <a href="#features" class="block py-2 text-text-secondary hover:text-primary transition-colors">功能</a>
+        <a href="#use-cases" class="block py-2 text-text-secondary hover:text-primary transition-colors">场景</a>
+        <a href="#tutorials" class="block py-2 text-text-secondary hover:text-primary transition-colors">教程</a>
+        <a href="#community" class="block py-2 text-text-secondary hover:text-primary transition-colors">社区</a>
+        <a href="#about" class="block py-2 text-text-secondary hover:text-primary transition-colors">关于</a>
+        <a href="#" class="block bg-accent hover:bg-accent/90 text-dark-light px-5 py-2 rounded-lg font-medium text-center btn-hover">
+          下载最新版
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- 英雄区 -->
+  <section id="hero" class="pt-24 md:pt-32 pb-20 md:pb-32 bg-dark-gradient bg-code-pattern bg-cover bg-center">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        <div class="space-y-8 reveal">
+          <h1 class="text-[clamp(2.5rem,5vw,4rem)] font-bold text-text-primary leading-tight">
+            DrissionPage：<br>Python网页自动化的<span class="text-secondary glow-effect">全能解决方案</span>
+          </h1>
+          <p class="text-[clamp(1rem,2vw,1.5rem)] text-text-secondary max-w-xl text-balance">
+            融合浏览器控制与数据包收发能力，兼顾自动化便利性与高效率，助力您轻松完成网页自动化任务
+          </p>
+          <div class="flex flex-col sm:flex-row gap-4">
+            <a href="#features" class="bg-primary hover:bg-primary/90 text-white px-8 py-3 rounded-lg font-medium text-center btn-hover neon-glow">
+              了解更多
+            </a>
+            <a href="#tutorials" class="bg-success hover:bg-success/90 text-white px-8 py-3 rounded-lg font-medium text-center btn-hover">
+              开始使用
+            </a>
+          </div>
+          <!-- 统计数据 -->
+          <div class="grid grid-cols-3 gap-4 pt-8 border-t border-primary/20">
+            <div class="text-center">
+              <div class="text-3xl font-bold text-primary">10K+</div>
+              <div class="text-text-secondary text-sm">社区用户</div>
+            </div>
+            <div class="text-center">
+              <div class="text-3xl font-bold text-secondary">500+</div>
+              <div class="text-text-secondary text-sm">企业客户</div>
+            </div>
+            <div class="text-center">
+              <div class="text-3xl font-bold text-accent">100+</div>
+              <div class="text-text-secondary text-sm">贡献者</div>
+            </div>
+          </div>
+        </div>
+        <div class="relative reveal">
+          <div class="gradient-border">
+            <div class="gradient-border-inner">
+              <div class="code-animation text-secondary font-mono text-sm">
+                <span>>> from drissionpage import ChromiumPage</span><br>
+                <span>>> page = ChromiumPage()</span><br>
+                <span>>> page.goto("https://example.com")</span><br>
+                <span>>> button = page.find_element_by_text("点击我")</span><br>
+                <span>>> button.click()</span>
+              </div>
+            </div>
+          </div>
+          <!-- 装饰元素 -->
+          <div class="absolute -top-4 -right-4 w-16 h-16 bg-accent rounded-full opacity-70 blur-xl animate-pulse-slow"></div>
+          <div class="absolute -bottom-6 -left-6 w-20 h-20 bg-secondary rounded-full opacity-50 blur-xl animate-pulse-slow"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 功能介绍区 -->
+  <section id="features" class="py-20 bg-dark-light">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center max-w-3xl mx-auto mb-16 reveal">
+        <h2 class="text-[clamp(1.8rem,3vw,2.5rem)] font-bold text-text-primary mb-4">强大的核心功能</h2>
+        <p class="text-text-secondary text-lg">融合浏览器自动化与数据包处理能力，为网页自动化任务提供全方位解决方案</p>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <!-- 功能卡片1 -->
+        <div class="dark-card rounded-xl shadow-lg p-8 card-hover reveal">
+          <div class="w-14 h-14 bg-primary/20 rounded-lg flex items-center justify-center mb-6 neon-glow">
+            <i class="fa fa-browser text-2xl text-primary"></i>
+          </div>
+          <h3 class="text-xl font-bold mb-4 text-text-primary">强大的浏览器控制能力</h3>
+          <p class="text-text-secondary">支持主流浏览器自动化操作，可模拟用户真实行为，实现页面元素定位、交互等功能，轻松完成网页操作自动化。</p>
+          <!-- 添加示例图片 -->
+          <div class="mt-6 rounded-lg overflow-hidden border border-dark-border">
+            <img src="https://picsum.photos/seed/browser/400/225" alt="浏览器自动化示例" class="w-full h-auto object-cover opacity-80 hover:opacity-100 transition-opacity">
+          </div>
+        </div>
+        
+        <!-- 功能卡片2 -->
+        <div class="dark-card rounded-xl shadow-lg p-8 card-hover reveal">
+          <div class="w-14 h-14 bg-secondary/20 rounded-lg flex items-center justify-center mb-6 neon-glow">
+            <i class="fa fa-exchange text-2xl text-secondary"></i>
+          </div>
+          <h3 class="text-xl font-bold mb-4 text-text-primary">高效的数据包处理</h3>
+          <p class="text-text-secondary">集成高性能数据包收发功能，可直接处理HTTP/HTTPS请求，相比传统浏览器自动化方式，具有更高的效率和更低的资源消耗。</p>
+          <!-- 添加示例图片 -->
+          <div class="mt-6 rounded-lg overflow-hidden border border-dark-border">
+            <img src="https://picsum.photos/seed/network/400/225" alt="数据包处理示例" class="w-full h-auto object-cover opacity-80 hover:opacity-100 transition-opacity">
+          </div>
+        </div>
+        
+        <!-- 功能卡片3 -->
+        <div class="dark-card rounded-xl shadow-lg p-8 card-hover reveal">
+          <div class="w-14 h-14 bg-accent/20 rounded-lg flex items-center justify-center mb-6 neon-glow">
+            <i class="fa fa-object-group text-2xl text-accent"></i>
+          </div>
+          <h3 class="text-xl font-bold mb-4 text-text-primary">灵活的混合模式</h3>
+          <p class="text-text-secondary">独特的浏览器与数据包结合模式，可根据任务需求灵活切换，充分发挥两者优势，为复杂网页自动化任务提供最佳解决方案。</p>
+          <!-- 添加示例图片 -->
+          <div class="mt-6 rounded-lg overflow-hidden border border-dark-border">
+            <img src="https://picsum.photos/seed/mixed/400/225" alt="混合模式示例" class="w-full h-auto object-cover opacity-80 hover:opacity-100 transition-opacity">
+          </div>
+        </div>
+      </div>
+      
+      <!-- 性能对比图表 -->
+      <div class="mt-20 dark-card rounded-xl shadow-lg p-8 reveal">
+        <h3 class="text-xl font-bold mb-6 text-center text-text-primary">性能对比</h3>
+        <div class="h-80">
+          <canvas id="performanceChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 使用场景区 -->
+  <section id="use-cases" class="py-20 bg-dark">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center max-w-3xl mx-auto mb-12 reveal">
+        <h2 class="text-[clamp(1.8rem,3vw,2.5rem)] font-bold text-text-primary mb-4">广泛的应用场景</h2>
+        <p class="text-text-secondary text-lg">适用于多种行业和场景，帮助您解决各类网页自动化需求</p>
+      </div>
+      
+      <div class="relative">
+        <!-- 滚动控制按钮 -->
+        <button id="scroll-left" class="absolute top-1/2 -left-4 transform -translate-y-1/2 w-10 h-10 bg-dark-medium border border-dark-border rounded-full shadow-lg flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-colors z-10 md:hidden neon-glow">
+          <i class="fa fa-chevron-left"></i>
+        </button>
+        <button id="scroll-right" class="absolute top-1/2 -right-4 transform -translate-y-1/2 w-10 h-10 bg-dark-medium border border-dark-border rounded-full shadow-lg flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-colors z-10 md:hidden neon-glow">
+          <i class="fa fa-chevron-right"></i>
+        </button>
+        
+        <!-- 场景滚动容器 -->
+        <div class="overflow-x-auto pb-8 custom-scrollbar">
+          <div class="flex space-x-6 min-w-max px-4 md:px-0">
+            <!-- 场景卡片1 -->
+            <div class="dark-card rounded-xl shadow-lg p-6 w-80 card-hover reveal">
+              <div class="flex items-start space-x-4">
+                <div class="w-12 h-12 bg-primary/20 rounded-lg flex items-center justify-center flex-shrink-0 neon-glow">
+                  <i class="fa fa-search text-xl text-primary"></i>
+                </div>
+                <div>
+                  <h3 class="text-lg font-bold mb-2 text-text-primary">网络爬虫与数据采集</h3>
+                  <p class="text-text-secondary">快速获取网页数据，支持动态页面内容提取，轻松应对各类反爬机制。</p>
+                </div>
+              </div>
+              <!-- 添加示例图片 -->
+              <div class="mt-4 rounded-lg overflow-hidden border border-dark-border">
+                <img src="https://picsum.photos/seed/crawler/300/160" alt="网络爬虫示例" class="w-full h-auto object-cover opacity-80 hover:opacity-100 transition-opacity">
+              </div>
+              <!-- 添加数据统计 -->
+              <div class="mt-4 pt-4 border-t border-dark-border">
+                <div class="text-sm text-text-secondary">提升效率 <span class="text-primary font-bold glow-effect">200%</span> 以上</div>
+              </div>
+            </div>
+            
+            <!-- 场景卡片2 -->
+            <div class="dark-card rounded-xl shadow-lg p-6 w-80 card-hover reveal">
+              <div class="flex items-start space-x-4">
+                <div class="w-12 h-12 bg-secondary/20 rounded-lg flex items-center justify-center flex-shrink-0 neon-glow">
+                  <i class="fa fa-flask text-xl text-secondary"></i>
+                </div>
+                <div>
+                  <h3 class="text-lg font-bold mb-2 text-text-primary">自动化测试</h3>
+                  <p class="text-text-secondary">模拟用户操作，对网页应用进行功能测试、性能测试，提高测试效率和覆盖率。</p>
+                </div>
+              </div>
+              <!-- 添加示例图片 -->
+              <div class="mt-4 rounded-lg overflow-hidden border border-dark-border">
+                <img src="https://picsum.photos/seed/testing/300/160" alt="自动化测试示例" class="w-full h-auto object-cover opacity-80 hover:opacity-100 transition-opacity">
+              </div>
+              <!-- 添加数据统计 -->
+              <div class="mt-4 pt-4 border-t border-dark-border">
+                <div class="text-sm text-text-secondary">减少测试时间 <span class="text-secondary font-bold glow-effect">75%</span></div>
+              </div>
+            </div>
+            
+            <!-- 场景卡片3 -->
+            <div class="dark-card rounded-xl shadow-lg p-6 w-80 card-hover reveal">
+              <div class="flex items-start space-x-4">
+                <div class="w-12 h-12 bg-accent/20 rounded-lg flex items-center justify-center flex-shrink-0 neon-glow">
+                  <i class="fa fa-cogs text-xl text-accent"></i>
+                </div>
+                <div>
+                  <h3 class="text-lg font-bold mb-2 text-text-primary">网页操作自动化</h3>
+                  <p class="text-text-secondary">自动完成重复的网页操作，如表单填写、文件上传下载、数据提交等，节省大量时间和精力。</p>
+                </div>
+              </div>
+              <!-- 添加示例图片 -->
+              <div class="mt-4 rounded-lg overflow-hidden border border-dark-border">
+                <img src="https://picsum.photos/seed/automation/300/160" alt="网页操作自动化示例" class="w-full h-auto object-cover opacity-80 hover:opacity-100 transition-opacity">
+              </div>
+              <!-- 添加数据统计 -->
+              <div class="mt-4 pt-4 border-t border-dark-border">
+                <div class="text-sm text-text-secondary">节省人力成本 <span class="text-accent font-bold glow-effect">90%</span></div>
+              </div>
+            </div>
+            
+            <!-- 场景卡片4 -->
+            <div class="dark-card rounded-xl shadow-lg p-6 w-80 card-hover reveal">
+              <div class="flex items-start space-x-4">
+                <div class="w-12 h-12 bg-success/20 rounded-lg flex items-center justify-center flex-shrink-0 neon-glow">
+                  <i class="fa fa-eye text-xl text-success"></i>
+                </div>
+                <div>
+                  <h3 class="text-lg font-bold mb-2 text-text-primary">网页监控与通知</h3>
+                  <p class="text-text-secondary">实时监控网页内容变化，当达到特定条件时自动发送通知，让您及时掌握重要信息。</p>
+                </div>
+              </div>
+              <!-- 添加示例图片 -->
+              <div class="mt-4 rounded-lg overflow-hidden border border-dark-border">
+                <img src="https://picsum.photos/seed/monitoring/300/160" alt="网页监控示例" class="w-full h-auto object-cover opacity-80 hover:opacity-100 transition-opacity">
+              </div>
+              <!-- 添加数据统计 -->
+              <div class="mt-4 pt-4 border-t border-dark-border">
+                <div class="text-sm text-text-secondary">响应速度提升 <span class="text-success font-bold glow-effect">400%</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 教程资源区 -->
+  <section id="tutorials" class="py-20 bg-dark-light">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center max-w-3xl mx-auto mb-16 reveal">
+        <h2 class="text-[clamp(1.8rem,3vw,2.5rem)] font-bold text-text-primary mb-4">丰富的学习资源</h2>
+        <p class="text-text-secondary text-lg">提供多种形式的学习资料，帮助您快速掌握DrissionPage的使用技巧</p>
+      </div>
+      
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <!-- 资源卡片1 -->
+        <div class="dark-card rounded-xl shadow-lg overflow-hidden card-hover reveal">
+          <div class="h-48 bg-primary/10 flex items-center justify-center">
+            <i class="fa fa-planet text-6xl text-primary/50"></i>
+          </div>
+          <div class="p-6">
+            <h3 class="text-lg font-bold mb-2 text-text-primary">知识星球</h3>
+            <p class="text-text-secondary text-sm mb-4">专业的技术交流社区，提供深入的教程、案例分享和答疑服务。</p>
+            <a href="#" class="text-primary hover:text-primary/80 font-medium inline-flex items-center">
+              点击进入 <i class="fa fa-arrow-right ml-1 text-sm"></i>
+            </a>
+          </div>
+        </div>
+        
+        <!-- 资源卡片2 -->
+        <div class="dark-card rounded-xl shadow-lg overflow-hidden card-hover reveal">
+          <div class="h-48 bg-secondary/10 flex items-center justify-center">
+            <i class="fa fa-play-circle text-6xl text-secondary/50"></i>
+          </div>
+          <div class="p-6">
+            <h3 class="text-lg font-bold mb-2 text-text-primary">Bilibili视频教程</h3>
+            <p class="text-text-secondary text-sm mb-4">直观的视频教学，由浅入深讲解各项功能和使用方法。</p>
+            <a href="#" class="text-secondary hover:text-secondary/80 font-medium inline-flex items-center">
+              点击观看 <i class="fa fa-arrow-right ml-1 text-sm"></i>
+            </a>
+          </div>
+        </div>
+        
+        <!-- 资源卡片3 -->
+        <div class="dark-card rounded-xl shadow-lg overflow-hidden card-hover reveal">
+          <div

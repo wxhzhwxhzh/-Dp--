@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DrissionPage - Python网页自动化解决方案</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+  
+  <!-- 配置Tailwind自定义主题 -->
+  <script>
+    tailwind.config = {
+    darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            primary: '#165DFF',
+            secondary: '#36CFC9',
+            accent: '#FF7D00',
+            success: '#00B42A',
+            dark: '#1D2129',
+            light: '#F5F7FA',
+            'gray-light': '#E5E6EB',
+            'gray-medium': '#C9CDD4',
+          },
+          fontFamily: {
+            inter: ['Inter', 'system-ui', 'sans-serif'],
+          },
+          animation: {
+            'fade-in': 'fadeIn 0.8s ease-in-out',
+            'slide-up': 'slideUp 0.8s ease-out',
+            'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            'typing': 'typing 2s steps(40) infinite alternate',
+          },
+          keyframes: {
+            fadeIn: {
+              '0%': { opacity: '0' },
+              '100%': { opacity: '1' },
+            },
+            slideUp: {
+              '0%': { transform: 'translateY(30px)', opacity: '0' },
+              '100%': { transform: 'translateY(0)', opacity: '1' },
+            },
+            typing: {
+              '0%': { width: '0' },
+              '100%': { width: '280px' },
+            }
+          },
+          backgroundImage: {
+            'code-pattern': "linear-gradient(135deg, #165DFF10 25%, transparent 25%), linear-gradient(225deg, #165DFF10 25%, transparent 25%), linear-gradient(315deg, #165DFF10 25%, transparent 25%), linear-gradient(45deg, #165DFF10 25%, transparent 25%)",
+          }
+        },
+      }
+    }
+  </script>
+  
+  <!-- 自定义工具类 -->
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto {
+        content-visibility: auto;
+      }
+      .text-balance {
+        text-wrap: balance;
+      }
+      .card-hover {
+        @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
+      }
+      .btn-hover {
+        @apply transition-all duration-300 hover:shadow-md hover:-translate-y-1;
+      }
+      .nav-link {
+        @apply relative text-dark hover:text-primary transition-colors duration-300;
+      }
+      .nav-link::after {
+        @apply content-[''] absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300;
+      }
+      .nav-link:hover::after {
+        @apply w-full;
+      }
+    }
+  </style>
+  
+  <style>
+    /* 基础样式 */
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      scroll-behavior: smooth;
+    }
+    
+    /* 代码动画容器 */
+    .code-animation {
+      position: relative;
+      overflow: hidden;
+      white-space: nowrap;
+      border-right: 2px solid #36CFC9;
+      margin: 0 auto;
+      animation: typing 2s steps(40) infinite alternate;
+    }
+    
+    /* 滚动显示动画 */
+    .reveal {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: all 0.8s ease;
+    }
+    
+    .reveal.active {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    
+    /* 导航栏滚动效果 */
+    .nav-scrolled {
+      @apply bg-white/95 backdrop-blur-md shadow-sm;
+    }
+    
+    /* 打赏二维码模态框 */
+    .qr-modal {
+      transition: all 0.3s ease;
+    }
+    
+    /* 自定义滚动条 */
+    .custom-scrollbar::-webkit-scrollbar {
+      height: 6px;
+    }
+    
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 10px;
+    }
+    
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #c1c1c1;
+      border-radius: 10px;
+    }
+    
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #a1a1a1;
+    }
+  </style>
+</head>
+
+<body class="bg-light text-dark dark:bg-[#121212] dark:text-gray-200">
+  <!-- 导航栏 -->
+  <header id="navbar" class="fixed w-full top-0 z-50 transition-all duration-300 bg-white/80 backdrop-blur-sm shadow-sm">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center h-16 md:h-20">
+        <!-- Logo -->
+        <a href="#" class="flex items-center space-x-2">
+          <div class="w-10 h-10 bg-gradient-to-r from-primary to-secondary rounded-lg flex items-center justify-center">
+            <span class="text-white font-bold text-xl">DP</span>
+          </div>
+          <span class="text-xl font-bold text-dark">DrissionPage</span>
+        </a>
+        
+        <!-- 桌面端导航 -->
+        <nav class="hidden md:flex items-center space-x-8">
+          <a href="#hero" class="nav-link">首页</a>
+          <a href="#features" class="nav-link">功能</a>
+          <a href="#use-cases" class="nav-link">场景</a>
+          <a href="#tutorials" class="nav-link">教程</a>
+          <a href="#community" class="nav-link">社区</a>
+          <a href="#about" class="nav-link">关于</a>
+        </nav>
+        
+        <!-- 下载按钮 -->
+
+<button id="dark-toggle" class="text-sm px-3 py-1 rounded-md border border-gray-medium hover:bg-gray-medium/20 transition-all">
+  夜间模式
+</button>
+
+        <div class="hidden md:block">
+          <a href="#" class="bg-accent hover:bg-accent/90 text-white px-5 py-2 rounded-lg font-medium btn-hover">
+            下载最新版
+          </a>
+        </div>
+        
+        <!-- 移动端菜单按钮 -->
+        <button id="menu-toggle" class="md:hidden text-dark focus:outline-none">
+          <i class="fa fa-bars text-2xl"></i>
+        </button>
+      </div>
+    </div>
+    
+    <!-- 移动端导航菜单 -->
+    <div id="mobile-menu" class="md:hidden hidden bg-white border-t border-gray-light">
+      <div class="container mx-auto px-4 py-3 space-y-3">
+        <a href="#hero" class="block py-2 text-dark hover:text-primary transition-colors">首页</a>
+        <a href="#features" class="block py-2 text-dark hover:text-primary transition-colors">功能</a>
+        <a href="#use-cases" class="block py-2 text-dark hover:text-primary transition-colors">场景</a>
+        <a href="#tutorials" class="block py-2 text-dark hover:text-primary transition-colors">教程</a>
+        <a href="#community" class="block py-2 text-dark hover:text-primary transition-colors">社区</a>
+        <a href="#about" class="block py-2 text-dark hover:text-primary transition-colors">关于</a>
+        <a href="#" class="block bg-accent hover:bg-accent/90 text-white px-5 py-2 rounded-lg font-medium text-center btn-hover">
+          下载最新版
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- 英雄区 -->
+  <section id="hero" class="pt-24 md:pt-32 pb-20 md:pb-32 bg-code-pattern bg-cover bg-center">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        <div class="space-y-8 reveal">
+          <h1 class="text-[clamp(2.5rem,5vw,4rem)] font-bold text-white leading-tight">
+            DrissionPage：<br>Python网页自动化的<span class="text-secondary">全能解决方案</span>
+          </h1>
+          <p class="text-[clamp(1rem,2vw,1.5rem)] text-gray-light max-w-xl text-balance">
+            融合浏览器控制与数据包收发能力，兼顾自动化便利性与高效率，助力您轻松完成网页自动化任务
+          </p>
+          <div class="flex flex-col sm:flex-row gap-4">
+            <a href="#features" class="bg-primary hover:bg-primary/90 text-white px-8 py-3 rounded-lg font-medium text-center btn-hover">
+              了解更多
+            </a>
+            <a href="#tutorials" class="bg-success hover:bg-success/90 text-white px-8 py-3 rounded-lg font-medium text-center btn-hover">
+              开始使用
+            </a>
+          </div>
+          <!-- 统计数据 -->
+          <div class="grid grid-cols-3 gap-4 pt-8 border-t border-white/20">
+            <div class="text-center">
+              <div class="text-3xl font-bold text-white">10K+</div>
+              <div class="text-gray-light text-sm">社区用户</div>
+            </div>
+            <div class="text-center">
+              <div class="text-3xl font-bold text-white">500+</div>
+              <div class="text-gray-light text-sm">企业客户</div>
+            </div>
+            <div class="text-center">
+              <div class="text-3xl font-bold text-white">100+</div>
+              <div class="text-gray-light text-sm">贡献者</div>
+            </div>
+          </div>
+        </div>
+        <div class="relative reveal">
+          <div class="bg-dark/50 backdrop-blur-md p-6 rounded-xl border border-white/10 shadow-2xl">
+            <div class="code-animation text-white font-mono text-sm">
+              <span>>> from drissionpage import ChromiumPage</span><br>
+              <span>>> page = ChromiumPage()</span><br>
+              <span>>> page.goto("https://example.com")</span><br>
+              <span>>> button = page.find_element_by_text("点击我")</span><br>
+              <span>>> button.click()</span>
+            </div>
+          </div>
+          <!-- 装饰元素 -->
+          <div class="absolute -top-4 -right-4 w-16 h-16 bg-accent rounded-full opacity-70 blur-xl"></div>
+          <div class="absolute -bottom-6 -left-6 w-20 h-20 bg-secondary rounded-full opacity-50 blur-xl"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 功能介绍区 -->
+  <section id="features" class="py-20 bg-white">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center max-w-3xl mx-auto mb-16 reveal">
+        <h2 class="text-[clamp(1.8rem,3vw,2.5rem)] font-bold text-dark mb-4">强大的核心功能</h2>
+        <p class="text-gray-medium text-lg">融合浏览器自动化与数据包处理能力，为网页自动化任务提供全方位解决方案</p>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <!-- 功能卡片1 -->
+        <div class="bg-white rounded-xl shadow-md p-8 card-hover border border-gray-light reveal">
+          <div class="w-14 h-14 bg-primary/10 rounded-lg flex items-center justify-center mb-6">
+            <i class="fa fa-browser text-2xl text-primary"></i>
+          </div>
+          <h3 class="text-xl font-bold mb-4">强大的浏览器控制能力</h3>
+          <p class="text-gray-medium">支持主流浏览器自动化操作，可模拟用户真实行为，实现页面元素定位、交互等功能，轻松完成网页操作自动化。</p>
+          <!-- 添加示例图片 -->
+          <div class="mt-6 rounded-lg overflow-hidden">
+            <img src="https://picsum.photos/seed/browser/400/225" alt="浏览器自动化示例" class="w-full h-auto object-cover">
+          </div>
+        </div>
+        
+        <!-- 功能卡片2 -->
+        <div class="bg-white rounded-xl shadow-md p-8 card-hover border border-gray-light reveal">
+          <div class="w-14 h-14 bg-primary/10 rounded-lg flex items-center justify-center mb-6">
+            <i class="fa fa-exchange text-2xl text-primary"></i>
+          </div>
+          <h3 class="text-xl font-bold mb-4">高效的数据包处理</h3>
+          <p class="text-gray-medium">集成高性能数据包收发功能，可直接处理HTTP/HTTPS请求，相比传统浏览器自动化方式，具有更高的效率和更低的资源消耗。</p>
+          <!-- 添加示例图片 -->
+          <div class="mt-6 rounded-lg overflow-hidden">
+            <img src="https://picsum.photos/seed/network/400/225" alt="数据包处理示例" class="w-full h-auto object-cover">
+          </div>
+        </div>
+        
+        <!-- 功能卡片3 -->
+        <div class="bg-white rounded-xl shadow-md p-8 card-hover border border-gray-light reveal">
+          <div class="w-14 h-14 bg-primary/10 rounded-lg flex items-center justify-center mb-6">
+            <i class="fa fa-object-group text-2xl text-primary"></i>
+          </div>
+          <h3 class="text-xl font-bold mb-4">灵活的混合模式</h3>
+          <p class="text-gray-medium">独特的浏览器与数据包结合模式，可根据任务需求灵活切换，充分发挥两者优势，为复杂网页自动化任务提供最佳解决方案。</p>
+          <!-- 添加示例图片 -->
+          <div class="mt-6 rounded-lg overflow-hidden">
+            <img src="https://picsum.photos/seed/mixed/400/225" alt="混合模式示例" class="w-full h-auto object-cover">
+          </div>
+        </div>
+      </div>
+      
+      <!-- 性能对比图表 -->
+      <div class="mt-20 bg-white rounded-xl shadow-md p-8 border border-gray-light reveal">
+        <h3 class="text-xl font-bold mb-6 text-center">性能对比</h3>
+        <div class="h-80">
+          <canvas id="performanceChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 使用场景区 -->
+  <section id="use-cases" class="py-20 bg-light">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center max-w-3xl mx-auto mb-12 reveal">
+        <h2 class="text-[clamp(1.8rem,3vw,2.5rem)] font-bold text-dark mb-4">广泛的应用场景</h2>
+        <p class="text-gray-medium text-lg">适用于多种行业和场景，帮助您解决各类网页自动化需求</p>
+      </div>
+      
+      <div class="relative">
+        <!-- 滚动控制按钮 -->
+        <button id="scroll-left" class="absolute top-1/2 -left-4 transform -translate-y-1/2 w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-colors z-10 md:hidden">
+          <i class="fa fa-chevron-left"></i>
+        </button>
+        <button id="scroll-right" class="absolute top-1/2 -right-4 transform -translate-y-1/2 w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-colors z-10 md:hidden">
+          <i class="fa fa-chevron-right"></i>
+        </button>
+        
+        <!-- 场景滚动容器 -->
+        <div class="overflow-x-auto pb-8 custom-scrollbar">
+          <div class="flex space-x-6 min-w-max px-4 md:px-0">
+            <!-- 场景卡片1 -->
+            <div class="bg-white rounded-xl shadow-md p-6 w-80 card-hover border border-gray-light reveal">
+              <div class="flex items-start space-x-4">
+                <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <i class="fa fa-search text-xl text-primary"></i>
+                </div>
+                <div>
+                  <h3 class="text-lg font-bold mb-2">网络爬虫与数据采集</h3>
+                  <p class="text-gray-medium">快速获取网页数据，支持动态页面内容提取，轻松应对各类反爬机制。</p>
+                </div>
+              </div>
+              <!-- 添加示例图片 -->
+              <div class="mt-4 rounded-lg overflow-hidden">
+                <img src="https://picsum.photos/seed/crawler/300/160" alt="网络爬虫示例" class="w-full h-auto object-cover">
+              </div>
+              <!-- 添加数据统计 -->
+              <div class="mt-4 pt-4 border-t border-gray-light">
+                <div class="text-sm text-gray-medium">提升效率 <span class="text-primary font-bold">200%</span> 以上</div>
+              </div>
+            </div>
+            
+            <!-- 场景卡片2 -->
+            <div class="bg-white rounded-xl shadow-md p-6 w-80 card-hover border border-gray-light reveal">
+              <div class="flex items-start space-x-4">
+                <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <i class="fa fa-flask text-xl text-primary"></i>
+                </div>
+                <div>
+                  <h3 class="text-lg font-bold mb-2">自动化测试</h3>
+                  <p class="text-gray-medium">模拟用户操作，对网页应用进行功能测试、性能测试，提高测试效率和覆盖率。</p>
+                </div>
+              </div>
+              <!-- 添加示例图片 -->
+              <div class="mt-4 rounded-lg overflow-hidden">
+                <img src="https://picsum.photos/seed/testing/300/160" alt="自动化测试示例" class="w-full h-auto object-cover">
+              </div>
+              <!-- 添加数据统计 -->
+              <div class="mt-4 pt-4 border-t border-gray-light">
+                <div class="text-sm text-gray-medium">减少测试时间 <span class="text-primary font-bold">75%</span></div>
+              </div>
+            </div>
+            
+            <!-- 场景卡片3 -->
+            <div class="bg-white rounded-xl shadow-md p-6 w-80 card-hover border border-gray-light reveal">
+              <div class="flex items-start space-x-4">
+                <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <i class="fa fa-cogs text-xl text-primary"></i>
+                </div>
+                <div>
+                  <h3 class="text-lg font-bold mb-2">网页操作自动化</h3>
+                  <p class="text-gray-medium">自动完成重复的网页操作，如表单填写、文件上传下载、数据提交等，节省大量时间和精力。</p>
+                </div>
+              </div>
+              <!-- 添加示例图片 -->
+              <div class="mt-4 rounded-lg overflow-hidden">
+                <img src="https://picsum.photos/seed/automation/300/160" alt="网页操作自动化示例" class="w-full h-auto object-cover">
+              </div>
+              <!-- 添加数据统计 -->
+              <div class="mt-4 pt-4 border-t border-gray-light">
+                <div class="text-sm text-gray-medium">节省人力成本 <span class="text-primary font-bold">90%</span></div>
+              </div>
+            </div>
+            
+            <!-- 场景卡片4 -->
+            <div class="bg-white rounded-xl shadow-md p-6 w-80 card-hover border border-gray-light reveal">
+              <div class="flex items-start space-x-4">
+                <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <i class="fa fa-eye text-xl text-primary"></i>
+                </div>
+                <div>
+                  <h3 class="text-lg font-bold mb-2">网页监控与通知</h3>
+                  <p class="text-gray-medium">实时监控网页内容变化，当达到特定条件时自动发送通知，让您及时掌握重要信息。</p>
+                </div>
+              </div>
+              <!-- 添加示例图片 -->
+              <div class="mt-4 rounded-lg overflow-hidden">
+                <img src="https://picsum.photos/seed/monitoring/300/160" alt="网页监控示例" class="w-full h-auto object-cover">
+              </div>
+              <!-- 添加数据统计 -->
+              <div class="mt-4 pt-4 border-t border-gray-light">
+                <div class="text-sm text-gray-medium">响应速度提升 <span class="text-primary font-bold">400%</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 教程资源区 -->
+  <section id="tutorials" class="py-20 bg-white">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center max-w-3xl mx-auto mb-16 reveal">
+        <h2 class="text-[clamp(1.8rem,3vw,2.5rem)] font-bold text-dark mb-4">丰富的学习资源</h2>
+        <p class="text-gray-medium text-lg">提供多种形式的学习资料，帮助您快速掌握DrissionPage的使用技巧</p>
+      </div>
+      
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <!-- 资源卡片1 -->
+        <div class="bg-white rounded-xl shadow-md overflow-hidden card-hover border border-gray-light reveal">
+          <div class="h-48 bg-primary/5 flex items-center justify-center">
+            <i class="fa fa-planet text-6xl text-primary/30"></i>
+          </div>
+          <div class="p-6">
+            <h3 class="text-lg font-bold mb-2">知识星球</h3>
+            <p class="text-gray-medium text-sm mb-4">专业的技术交流社区，提供深入的教程、案例分享和答疑服务。</p>
+            <a href="#" class="text-primary hover:text-primary/80 font-medium inline-flex items-center">
+              点击进入 <i class="fa fa-arrow-right ml-1 text-sm"></i>
+            </a>
+          </div>
+        </div>
+        
+        <!-- 资源卡片2 -->
+        <div class="bg-white rounded-xl shadow-md overflow-hidden card-hover border border-gray-light reveal">
+          <div class="h-48 bg-primary/5 flex items-center justify-center">
+            <i class="fa fa-play-circle text-6xl text-primary/30"></i>
+          </div>
+          <div class="p-6">
+            <h3 class="text-lg font-bold mb-2">Bilibili视频教程</h3>
+            <p class="text-gray-medium text-sm mb-4">直观的视频教学，由浅入深讲解各项功能和使用方法。</p>
+            <a href="#" class="text-primary hover:text-primary/80 font-medium inline-flex items-center">
+              点击观看 <i class="fa fa-arrow-right ml-1 text-sm"></i>
+            </a>
+          </div>
+        </div>
+        
+        <!-- 资源卡片3 -->
+        <div class="bg-white rounded-xl shadow-md overflow-hidden card-hover border border-gray-light reveal">
+          <div class="h-48 bg-primary/5 flex items-center justify-center">
+            <i class="fa fa-book text-6xl text-primary/30"></i>
+          </div>
+          <div class="p-6">
+            <h3 class="text-lg font-bold mb-2">小红书指南</h3>
+            <p class="text-gray-medium text-sm mb-4">简洁明了的图文教程，适合快速查阅和学习。</p>
+            <a href="#" class="text-primary hover:text-primary/80 font-medium inline-flex items-center">
+              点击查看 <i class="fa fa-arrow-right ml-1 text-sm"></i>
+            </a>
+          </div>
+        </div>
+        
+        <!-- 资源卡片4 -->
+        <div class="bg-white rounded-xl shadow-md overflow-hidden card-hover border border-gray-light reveal">
+          <div class="h-48 bg-primary/5 flex items-center justify-center">
+            <i class="fa fa-download text-6xl text-primary/30"></i>
+          </div>
+          <div class="p-6">
+            <h3 class="text-lg font-bold mb-2">离线文档</h3>
+            <p class="text-gray-medium text-sm mb-4">完整的本地文档，方便您在没有网络的情况下查阅。</p>
+            <a href="#" class="text-primary hover:text-primary/80 font-medium inline-flex items-center">
+              下载文档 <i class="fa fa-arrow-right ml-1 text-sm"></i>
+            </a>
+          </div>
+        </div>
+        
+        <!-- 资源卡片5 -->
+        <div class="bg-white rounded-xl shadow-md overflow-hidden card-hover border border-gray-light reveal">
+          <div class="h-48 bg-primary/5 flex items-center justify-center">
+            <i class="fa fa-video-camera text-6xl text-primary/30"></i>
+          </div>
+          <div class="p-6">
+            <h3 class="text-lg font-bold mb-2">抖音短视频</h3>
+            <p class="text-gray-medium text-sm mb-4">有趣的短视频教程，展示实用技巧和应用场景。</p>
+            <a href="#" class="text-primary hover:text-primary/80 font-medium inline-flex items-center">
+              点击观看 <i class="fa fa-arrow-right ml-1 text-sm"></i>
+            </a>
+          </div>
+        </div>
+        
+        <!-- 资源卡片6 -->
+        <div class="bg-white rounded-xl shadow-md overflow-hidden card-hover border border-gray-light reveal">
+          <div class="h-48 bg-primary/5 flex items-center justify-center">
+            <i class="fa fa-users text-6xl text-primary/30"></i>
+          </div>
+          <div class="p-6">
+            <h3 class="text-lg font-bold mb-2">实战案例</h3>
+            <p class="text-gray-medium text-sm mb-4">丰富的实际项目案例，帮助您理解和应用DrissionPage。</p>
+            <a href="#" class="text-primary hover:text-primary/80 font-medium inline-flex items-center">
+              查看案例 <i class="fa fa-arrow-right ml-1 text-sm"></i>
+            </a>
+          </div>
+        </div>
+        
+        <!-- 资源卡片7 -->
+        <div class="bg-white rounded-xl shadow-md overflow-hidden card-hover border border-gray-light reveal">
+          <div class="h-48 bg-primary/5 flex items-center justify-center">
+            <i class="fa fa-code text-6xl text-primary/30"></i>
+          </div>
+          <div class="p-6">
+            <h3 class="text-lg font-bold mb-2">API参考</h3>
+            <p class="text-gray-medium text-sm mb-4">详细的API文档，提供全面的接口说明和参数解释。</p>
+            <a href="#" class="text-primary hover:text-primary/80 font-medium inline-flex items-center">
+              查看参考 <i class="fa fa-arrow-right ml-1 text-sm"></i>
+            </a>
+          </div>
+        </div>
+        
+        <!-- 资源卡片8 -->
+        <div class="bg-white rounded-xl shadow-md overflow-hidden card-hover border border-gray-light reveal">
+          <div class="h-48 bg-primary/5 flex items-center justify-center">
+            <i class="fa fa-question-circle text-6xl text-primary/30"></i>
+          </div>
+          <div class="p-6">
+            <h3 class="text-lg font-bold mb-2">常见问题</h3>
+            <p class="text-gray-medium text-sm mb-4">收集用户常见问题和解决方案，帮助您快速解决遇到的问题。</p>
+            <a href="#" class="text-primary hover:text-primary/80 font-medium inline-flex items-center">
+              查看解答 <i class="fa fa-arrow-right ml-1 text-sm"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 社区支持区 -->
+  <section id="community" class="py-20 bg-light">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+        <!-- 左侧项目信息 -->
+        <div class="bg-white rounded-xl shadow-md p-8 border border-gray-light reveal">
+          <h2 class="text-2xl font-bold mb-6">项目信息</h2>
+          
+          <div class="space-y-6">
+            <div class="flex items-center justify-between p-4 bg-light rounded-lg">
+              <div>
+                <div class="text-gray-medium text-sm">最新版本</div>
+                <div class="text-xl font-bold">4.1.0.18</div>
+              </div>
+              <div>
+                <div class="text-gray-medium text-sm">更新日期</div>
+                <div class="text-lg font-medium">2025年6月19日</div>
+              </div>
+            </div>
+            
+            <div class="space-y-3">
+              <h3 class="text-lg font-bold mb-3">项目地址</h3>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <a href="#" class="flex items-center justify-center bg-white border border-gray-light rounded-lg p-3 hover:border-primary transition-colors">
+                  <i class="fa fa-gitlab text-xl mr-2"></i>
+                  <span>Gitee</span>
+                </a>
+                <a href="#" class="flex items-center justify-center bg-white border border-gray-light rounded-lg p-3 hover:border-primary transition-colors">
+                  <i class="fa fa-github text-xl mr-2"></i>
+                  <span>GitHub</span>
+                </a>
+                <a href="#" class="flex items-center justify-center bg-white border border-gray-light rounded-lg p-3 hover:border-primary transition-colors">
+                  <i class="fa fa-code-fork text-xl mr-2"></i>
+                  <span>GitCode</span>
+                </a>
+              </div>
+            </div>
+            
+            <div>
+              <h3 class="text-lg font-bold mb-3">交流QQ群</h3>
+              <div class="flex items-center">
+                <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mr-4">
+                  <i class="fa fa-qq text-2xl text-primary"></i>
+                </div>
+                <div>
+                  <div class="text-lg font-medium">391178600</div>
+                  <div class="text-gray-medium text-sm">点击按钮加入QQ群</div>
+                </div>
+                <a href="#" class="ml-auto bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg font-medium btn-hover">
+                  加入群聊
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 右侧作者支持 -->
+        <div class="bg-white rounded-xl shadow-md p-8 border border-gray-light reveal">
+          <h2 class="text-2xl font-bold mb-6">支持作者</h2>
+          
+          <div class="space-y-6">
+            <p class="text-gray-medium">作者是个人开发者，开发和维护本项目非常不易。如果DrissionPage对您有所帮助，欢迎打赏支持，您的支持是我们持续更新的动力！</p>
+            
+            <div class="grid grid-cols-2 gap-4">
+              <button id="alipay-btn" class="flex flex-col items-center justify-center bg-white border-2 border-gray-light rounded-lg p-4 hover:border-primary transition-colors cursor-pointer">
+                <i class="fa fa-credit-card text-3xl text-gray-medium mb-2"></i>
+                <span class="font-medium">支付宝</span>
+              </button>
+              <button id="wechat-btn" class="flex flex-col items-center justify-center bg-white border-2 border-gray-light rounded-lg p-4 hover:border-primary transition-colors cursor-pointer">
+                <i class="fa fa-wechat text-3xl text-gray-medium mb-2"></i>
+                <span class="font-medium">微信支付</span>
+              </button>
+            </div>
+            
+            <!-- 打赏二维码模态框 -->
+            <div id="qr-modal" class="qr-modal fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+              <div class="bg-white rounded-xl p-6 max-w-sm w-full mx-4">
+                <div class="text-center">
+                  <h3 class="text-xl font-bold mb-4" id="qr-title">支付宝打赏</h3>
+                  <div class="w-64 h-64 mx-auto mb-4 bg-gray-light rounded-lg flex items-center justify-center">
+                    <img id="qr-image" src="https://picsum.photos/seed/alipay/256/256" alt="支付宝打赏二维码" class="w-full h-full object-cover">
+                  </div>
+                  <p class="text-gray-medium mb-4">扫描二维码，支持作者继续开发和维护</p>
+                  <button id="close-qr" class="bg-primary hover:bg-primary/90 text-white px-6 py-2 rounded-lg font-medium btn-hover">
+                    关闭
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 页脚 -->
+  <footer class="bg-dark text-white py-12">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div>
+          <div class="flex items-center space-x-2 mb-4">
+            <div class="w-10 h-10 bg-gradient-to-r from-primary to-secondary rounded-lg flex items-center justify-center">
+              <span class="text-white font-bold text-xl">DP</span>
+            </div>
+            <span class="text-xl font-bold text-white">DrissionPage</span>
+          </div>
+          <p class="text-gray-medium mb-6">强大的Python网页自动化库，融合浏览器控制与数据包处理能力，为您的自动化需求提供全方位支持。</p>
+          <div class="flex space-x-4">
+            <a href="#" class="text-gray-medium hover:text-white transition-colors">
+              <i class="fa fa-weibo text-xl"></i>
+            </a>
+            <a href="#" class="text-gray-medium hover:text-white transition-colors">
+              <i class="fa fa-wechat text-xl"></i>
+            </a>
+            <a href="#" class="text-gray-medium hover:text-white transition-colors">
+              <i class="fa fa-github text-xl"></i>
+            </a>
+            <a href="#" class="text-gray-medium hover:text-white transition-colors">
+              <i class="fa fa-zhihu text-xl"></i>
+            </a>
+          </div>
+        </div>
+        
+        <div>
+          <h3 class="text-lg font-bold mb-4">快速链接</h3>
+          <ul class="space-y-2">
+            <li><a href="#hero" class="text-gray-medium hover:text-white transition-colors">首页</a></li>
+            <li><a href="#features" class="text-gray-medium hover:text-white transition-colors">功能</a></li>
+            <li><a href="#use-cases" class="text-gray-medium hover:text-white transition-colors">场景</a></li>
+            <li><a href="#tutorials" class="text-gray-medium hover:text-white transition-colors">教程</a></li>
+            <li><a href="#community" class="text-gray-medium hover:text-white transition-colors">社区</a></li>
+            <li><a href="#" class="text-gray-medium hover:text-white transition-colors">使用条款</a></li>
+          </ul>
+        </div>
+        
+        <div>
+          <h3 class="text-lg font-bold mb-4">联系我们</h3>
+          <ul class="space-y-2">
+            <li class="flex items-center">
+              <i class="fa fa-envelope text-gray-medium mr-2"></i>
+              <a href="mailto:support@drissionpage.com" class="text-gray-medium hover:text-white transition-colors">support@drissionpage.com</a>
+            </li>
+            <li class="flex items-center">
+              <i class="fa fa-qq text-gray-medium mr-2"></i>
+              <span class="text-gray-medium">391178600</span>
+            </li>
+            <li class="flex items-center">
+              <i class="fa fa-wechat text-gray-medium mr-2"></i>
+              <span class="text-gray-medium">DrissionPage</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+      
+      <div class="border-t border-gray-800 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
+        <div class="text-gray-medium text-sm mb-4 md:mb-0">
+          © 2025 DrissionPage 版权所有。禁止将DrissionPage应用到任何违反法律法规和道德约束的项目中，禁止用于商业行为（未获得授权）。
+        </div>
+        <div>
+          <a href="#" class="text-gray-medium hover:text-white text-sm transition-colors">使用条款</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- JavaScript -->
+  <script>
+    // 导航栏滚动效果
+    window.addEventListener('scroll', function() {
+      const navbar = document.getElementById('navbar');
+      if (window.scrollY > 50) {
+        navbar.classList.add('nav-scrolled');
+      } else {
+        navbar.classList.remove('nav-scrolled');
+      }
+    });
+    
+    // 移动端菜单切换
+    document.getElementById('menu-toggle').addEventListener('click', function() {
+      const mobileMenu = document.getElementById('mobile-menu');
+      mobileMenu.classList.toggle('hidden');
+    });
+    
+    // 滚动显示动画
+    function revealElements() {
+      const reveals = document.querySelectorAll('.reveal');
+      const windowHeight = window.innerHeight;
+      
+      reveals.forEach(element => {
+        const elementTop = element.getBoundingClientRect().top;
+        const elementVisible = 150;
+        
+        if (elementTop < windowHeight - elementVisible) {
+          element.classList.add('active');
+        }
+      });
+    }
+    
+    // 初始化时检查元素
+    window.addEventListener('load', revealElements);
+    // 滚动时检查元素
+    window.addEventListener('scroll', revealElements);
+    
+    // 平滑滚动
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        
+        const targetId = this.getAttribute('href');
+        const targetElement = document.querySelector(targetId);
+        
+        if (targetElement) {
+          window.scrollTo({
+            top: targetElement.offsetTop - 80, // 导航栏高度偏移
+            behavior: 'smooth'
+          });
+          
+          // 关闭移动端菜单
+          const mobileMenu = document.getElementById('mobile-menu');
+          if (!mobileMenu.classList.contains('hidden')) {
+            mobileMenu.classList.add('hidden');
+          }
+        }
+      });
+    });
+    
+    // 场景卡片滚动控制
+    const scrollLeftBtn = document.getElementById('scroll-left');
+    const scrollRightBtn = document.getElementById('scroll-right');
+    const scrollContainer = document.querySelector('#use-cases .overflow-x-auto');
+    
+    if (scrollLeftBtn && scrollRightBtn && scrollContainer) {
+      scrollLeftBtn.addEventListener('click', () => {
+        scrollContainer.scrollBy({ left: -300, behavior: 'smooth' });
+      });
+      
+      scrollRightBtn.addEventListener('click', () => {
+        scrollContainer.scrollBy({ left: 300, behavior: 'smooth' });
+      });
+    }
+    
+    // 打赏二维码模态框
+    const qrModal = document.getElementById('qr-modal');
+    const qrTitle = document.getElementById('qr-title');
+    const qrImage = document.getElementById('qr-image');
+    const closeQrBtn = document.getElementById('close-qr');
+    const alipayBtn = document.getElementById('alipay-btn');
+    const wechatBtn = document.getElementById('wechat-btn');
+    
+    if (qrModal && qrTitle && qrImage && closeQrBtn && alipayBtn && wechatBtn) {
+      alipayBtn.addEventListener('click', () => {
+        qrTitle.textContent = '支付宝打赏';
+        qrImage.src = 'https://picsum.photos/seed/alipay/256/256';
+        qrImage.alt = '支付宝打赏二维码';
+        qrModal.classList.remove('hidden');
+      });
+      
+      wechatBtn.addEventListener('click', () => {
+        qrTitle.textContent = '微信打赏';
+        qrImage.src = 'https://picsum.photos/seed/wechat/256/256';
+        qrImage.alt = '微信打赏二维码';
+        qrModal.classList.remove('hidden');
+      });
+      
+      closeQrBtn.addEventListener('click', () => {
+        qrModal.classList.add('hidden');
+      });
+      
+      // 点击模态框外部关闭
+      qrModal.addEventListener('click', (e) => {
+        if (e.target === qrModal) {
+          qrModal.classList.add('hidden');
+        }
+      });
+    }
+    
+    
+  const darkToggle = document.getElementById('dark-toggle');
+  if (darkToggle) {
+    darkToggle.addEventListener('click', () => {
+      document.documentElement.classList.toggle('dark');
+    });
+  }
+  // 默认根据系统偏好设置
+  if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    document.documentElement.classList.add('dark');
+  }
+
+
+    // 性能对比图表
+    window.addEventListener('load', function() {
+      const ctx = document.getElementById('performanceChart');
+      
+      if (ctx) {
+        new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: ['浏览器自动化', '数据包处理', '混合模式'],
+            datasets: [
+              {
+                label: '执行时间(秒)',
+                data: [5.2, 1.8, 2.5],
+                backgroundColor: [
+                  'rgba(22, 93, 255, 0.6)',
+                  'rgba(54, 207, 201, 0.6)',
+                  'rgba(255, 125, 0, 0.6)'
+                ],
+                borderColor: [
+                  'rgba(22, 93, 255, 1)',
+                  'rgba(54, 207, 201, 1)',
+                  'rgba(255, 125, 0, 1)'
+                ],
+                borderWidth: 1
+              },
+              {
+                label: '资源占用(MB)',
+                data: [180, 45, 90],
+                backgroundColor: [
+                  'rgba(22, 93, 255, 0.3)',
+                  'rgba(54, 207, 201, 0.3)',
+                  'rgba(255, 125, 0, 0.3)'
+                ],
+                borderColor: [
+                  'rgba(22, 93, 255, 0.7)',
+                  'rgba(54, 207, 201, 0.7)',
+                  'rgba(255, 125, 0, 0.7)'
+                ],
+                borderWidth: 1
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              y: {
+                beginAtZero: true
+              }
+            }
+          }
+        });
+      }
+    });
+
+     document.documentElement.classList.toggle('dark');
+  </script>
+</body>
+</html>
